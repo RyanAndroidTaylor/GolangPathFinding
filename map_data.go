@@ -13,7 +13,7 @@ func check(e error) {
 }
 
 func readMap() WorldMap {
-  data, err := ioutil.ReadFile("map.json")
+  data, err := ioutil.ReadFile("resources/map.json")
 
   check(err)
 

@@ -18,23 +18,6 @@ func main() {
   explorer.Explore(worldMap)
 
   fmt.Println(explorer)
-
-  priorityQueue := NewStatePriorityQueue()
-
-  priorityQueue.insert(worldMap.States["Arad"], 1)
-  priorityQueue.insert(worldMap.States["Zerind"], 2)
-  priorityQueue.insert(worldMap.States["Oradea"], 3)
-  priorityQueue.insert(worldMap.States["Timisoara"], 4)
-  priorityQueue.insert(worldMap.States["Lugoj"], 5)
-  priorityQueue.insert(worldMap.States["Sibiu"], 6)
-  priorityQueue.insert(worldMap.States["Urziceni"], 15)
-
-  fmt.Println(priorityQueue)
-
-  removedState := priorityQueue.RemoveMax()
-
-  fmt.Println(priorityQueue)
-  fmt.Printf("RemovedState %s\n", removedState.Name)
 }
 
 type Explorer struct {
@@ -43,15 +26,19 @@ type Explorer struct {
 
 func (e *Explorer) Explore(worldMap WorldMap) {
   explored := make(map[string]*State)
-  queue := []*State{worldMap.StartingPoint}
+  queue := NewStatePriorityQueue()
 
-  var queueLength = len(queue)
+  var step = 10
+
+  queue.Insert(worldMap.StartingPoint, step)
+
+  var queueLength = queue.Len()
 
   for queueLength > 0 {
-    item := queue[queueLength-1]
+    stateItem := queue.RemoveMax()
+    item := stateItem.State
 
-    // Remove item from end of queue
-    queue = append(queue[:0], queue[:queueLength-1]...)
+    step = stateItem.Priority - 1
 
     actions := worldMap.GetActionsFor(item.Name)
 
@@ -60,18 +47,18 @@ func (e *Explorer) Explore(worldMap WorldMap) {
     for _, action := range actions {
       var actionInQueue = false
 
-      for _, state := range queue {
-          if (state == action.To) {
+      for _, state := range queue.queue {
+          if state != nil && state.State == action.To {
             actionInQueue = true
           }
       }
 
       if (explored[action.To.Name] == nil && !actionInQueue) {
-        queue = append(queue, action.To)
+        queue.Insert(action.To, step)
       }
     }
 
-    queueLength = len(queue)
+    queueLength = queue.Len()
 
     fmt.Printf("\nitem %s\n", item.Name)
     fmt.Printf("queue length %d\n", queueLength)

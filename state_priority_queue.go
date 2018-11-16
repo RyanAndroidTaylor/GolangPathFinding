@@ -11,7 +11,7 @@ func NewStatePriorityQueue() *StatePriorityQueue {
   return &StatePriorityQueue{[]*StateItem{nil}}
 }
 
-func (s *StatePriorityQueue) insert(state *State, priority int) {
+func (s *StatePriorityQueue) Insert(state *State, priority int) {
   stateItem  := &StateItem{state, priority}
 
   s.queue = append(s.queue, stateItem)
@@ -39,7 +39,11 @@ func (s *StatePriorityQueue) insert(state *State, priority int) {
 }
 
 //TODO Need to handle when there is only 1 or 2 items in the queue
-func (s *StatePriorityQueue) RemoveMax() *State {
+func (s *StatePriorityQueue) RemoveMax() *StateItem {
+  if len(s.queue) <= 1 {
+    return nil
+  }
+
   removedItem := s.queue[1]
 
   lastItemIndex := len(s.queue) - 1
@@ -54,8 +58,14 @@ func (s *StatePriorityQueue) RemoveMax() *State {
   var lastItemLocation = 1
   var priorityItemLocation = 2
 
+  queueLength := len(s.queue)
+
   // Checking to see which index is next in priority
-  if s.queue[2].Priority < s.queue[3].Priority {
+  if queueLength <= 2 {
+    return removedItem
+  } else if queueLength == 3 {
+    priorityItemLocation = 2
+  } else if s.queue[2].Priority < s.queue[3].Priority {
     priorityItemLocation = 3
   }
 
@@ -88,10 +98,14 @@ func (s *StatePriorityQueue) RemoveMax() *State {
     }
   }
 
-  return removedItem.State
+  return removedItem
 }
 
-func (s *StatePriorityQueue) empty() bool {
+func (s *StatePriorityQueue) Len() int {
+  return len(s.queue) - 1
+}
+
+func (s *StatePriorityQueue) Empty() bool {
   return len(s.queue) < 1
 }
 
