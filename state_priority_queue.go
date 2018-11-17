@@ -26,7 +26,7 @@ func (p *PathPriorityQueue) Insert(path *Path, priority int) {
   var parentLocation = currentLocation / 2
 
   for currentLocation > 1 {
-    if p.queue[currentLocation].Priority > p.queue[parentLocation].Priority {
+    if p.queue[currentLocation].Priority < p.queue[parentLocation].Priority {
       currentItem := p.queue[currentLocation]
 
       p.queue[currentLocation] = p.queue[parentLocation]
@@ -67,8 +67,12 @@ func (p *PathPriorityQueue) RemoveMax() *PathItem {
   if queueLength <= 2 {
     return removedItem
   } else if queueLength == 3 {
-    priorityItemLocation = 2
-  } else if p.queue[2].Priority < p.queue[3].Priority {
+    // If there are two items in the queu and the first was is of less value
+    // then there is no need to move any items
+    if p.queue[lastItemLocation].Priority < p.queue[priorityItemLocation].Priority {
+      return removedItem
+    }
+  } else if p.queue[2].Priority > p.queue[3].Priority {
     priorityItemLocation = 3
   }
 
@@ -87,11 +91,11 @@ func (p *PathPriorityQueue) RemoveMax() *PathItem {
 
     if (priorityItemLocation == len(p.queue) -1) {
       // Do nothing
-    } else if p.queue[priorityItemLocation].Priority < p.queue[priorityItemLocation + 1].Priority {
+    } else if p.queue[priorityItemLocation].Priority > p.queue[priorityItemLocation + 1].Priority {
       priorityItemLocation = priorityItemLocation + 1
     }
 
-    if p.queue[priorityItemLocation].Priority > p.queue[lastItemLocation].Priority {
+    if p.queue[priorityItemLocation].Priority < p.queue[lastItemLocation].Priority {
       priorityItem = p.queue[priorityItemLocation]
 
       p.queue[priorityItemLocation] = p.queue[lastItemLocation]

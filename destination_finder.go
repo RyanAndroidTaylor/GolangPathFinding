@@ -28,11 +28,9 @@ func (e *Explorer) Explore(worldMap WorldMap) {
   explored := make(map[string]*Path)
   queue := NewPathPriorityQueue()
 
-  var step = 10
-
   startingPath := &Path{worldMap.StartingPoint, nil, 0, nil}
 
-  queue.Insert(startingPath, step)
+  queue.Insert(startingPath, 0)
 
   var queueLength = queue.Len()
 
@@ -40,17 +38,16 @@ func (e *Explorer) Explore(worldMap WorldMap) {
     pathItem := queue.RemoveMax()
     currentPath := pathItem.Path
 
-    step = pathItem.Priority - 1
-
     actions := worldMap.GetActionsFor(currentPath.State.Name)
 
     explored[currentPath.State.Name] = currentPath
 
     for _, action := range actions {
-      if (explored[action.To.Name] == nil && !queue.ContainsPathWithState(action.To)) {
+      // Use && !queue.ContainsPathWithState(action.To) if you are trying to get to the location in the fewest moves
+      if (explored[action.To.Name] == nil) {
         newPath := &Path{action.To, action, action.Cost, currentPath}
 
-        queue.Insert(newPath, step)
+        queue.Insert(newPath, pathItem.Priority + action.Cost)
       }
     }
 
