@@ -25,49 +25,45 @@ type Explorer struct {
 }
 
 func (e *Explorer) Explore(worldMap WorldMap) {
-  explored := make(map[string]*State)
-  queue := NewStatePriorityQueue()
+  explored := make(map[string]*Path)
+  queue := NewPathPriorityQueue()
 
   var step = 10
 
-  queue.Insert(worldMap.StartingPoint, step)
+  startingPath := &Path{worldMap.StartingPoint, nil, 0, nil}
+
+  queue.Insert(startingPath, step)
 
   var queueLength = queue.Len()
 
   for queueLength > 0 {
-    stateItem := queue.RemoveMax()
-    item := stateItem.State
+    pathItem := queue.RemoveMax()
+    currentPath := pathItem.Path
 
-    step = stateItem.Priority - 1
+    step = pathItem.Priority - 1
 
-    actions := worldMap.GetActionsFor(item.Name)
+    actions := worldMap.GetActionsFor(currentPath.State.Name)
 
-    explored[item.Name] = item
+    explored[currentPath.State.Name] = currentPath
 
     for _, action := range actions {
-      var actionInQueue = false
+      if (explored[action.To.Name] == nil && !queue.ContainsPathWithState(action.To)) {
+        newPath := &Path{action.To, action, action.Cost, currentPath}
 
-      for _, state := range queue.queue {
-          if state != nil && state.State == action.To {
-            actionInQueue = true
-          }
-      }
-
-      if (explored[action.To.Name] == nil && !actionInQueue) {
-        queue.Insert(action.To, step)
+        queue.Insert(newPath, step)
       }
     }
 
     queueLength = queue.Len()
 
-    fmt.Printf("\nitem %s\n", item.Name)
+    fmt.Printf("\nitem %s\n", pathItem.Path.State.Name)
     fmt.Printf("queue length %d\n", queueLength)
     fmt.Printf("queue ", queue)
-  }
-}
 
-type Node struct {
-  State *State
-  Action *Action
-  Parent * Node
+    if pathItem.Path.State.Name == "Bucharest" {
+      fmt.Println("\nBucharest found", pathItem)
+
+      break
+    }
+  }
 }

@@ -3,32 +3,34 @@ package main
 import "fmt"
 import "strings"
 
-type StatePriorityQueue struct {
-  queue []*StateItem
+type PathPriorityQueue struct {
+  queue []*PathItem
+  set map[string]*Path
 }
 
-func NewStatePriorityQueue() *StatePriorityQueue {
-  return &StatePriorityQueue{[]*StateItem{nil}}
+func NewPathPriorityQueue() *PathPriorityQueue {
+  return &PathPriorityQueue{[]*PathItem{nil}, make(map[string]*Path)}
 }
 
-func (s *StatePriorityQueue) Insert(state *State, priority int) {
-  stateItem  := &StateItem{state, priority}
+func (p *PathPriorityQueue) Insert(path *Path, priority int) {
+  pathItem := &PathItem{path, priority}
 
-  s.queue = append(s.queue, stateItem)
+  p.queue = append(p.queue, pathItem)
+  p.set[path.State.Name] = path
 
-  if len(s.queue) <= 2 {
+  if len(p.queue) <= 2 {
     return
   }
 
-  var currentLocation = len(s.queue) - 1
+  var currentLocation = len(p.queue) - 1
   var parentLocation = currentLocation / 2
 
   for currentLocation > 1 {
-    if s.queue[currentLocation].Priority > s.queue[parentLocation].Priority {
-      currentItem := s.queue[currentLocation]
+    if p.queue[currentLocation].Priority > p.queue[parentLocation].Priority {
+      currentItem := p.queue[currentLocation]
 
-      s.queue[currentLocation] = s.queue[parentLocation]
-      s.queue[parentLocation] = currentItem
+      p.queue[currentLocation] = p.queue[parentLocation]
+      p.queue[parentLocation] = currentItem
 
       currentLocation = parentLocation
       parentLocation = currentLocation / 2
@@ -39,40 +41,41 @@ func (s *StatePriorityQueue) Insert(state *State, priority int) {
 }
 
 //TODO Need to handle when there is only 1 or 2 items in the queue
-func (s *StatePriorityQueue) RemoveMax() *StateItem {
-  if len(s.queue) <= 1 {
+func (p *PathPriorityQueue) RemoveMax() *PathItem {
+  if len(p.queue) <= 1 {
     return nil
   }
 
-  removedItem := s.queue[1]
+  removedItem := p.queue[1]
 
-  lastItemIndex := len(s.queue) - 1
+  lastItemIndex := len(p.queue) - 1
 
   // Move the last item in the array to the start of the array
-  s.queue[1] = s.queue[lastItemIndex]
+  p.queue[1] = p.queue[lastItemIndex]
+  p.set[removedItem.Path.State.Name] = nil
 
   //Remove last item from the end of the queue
-  s.queue = append(s.queue[:0], s.queue[:lastItemIndex]...)
+  p.queue = append(p.queue[:0], p.queue[:lastItemIndex]...)
 
   // We moved the last item in the array to position 1
   var lastItemLocation = 1
   var priorityItemLocation = 2
 
-  queueLength := len(s.queue)
+  queueLength := len(p.queue)
 
   // Checking to see which index is next in priority
   if queueLength <= 2 {
     return removedItem
   } else if queueLength == 3 {
     priorityItemLocation = 2
-  } else if s.queue[2].Priority < s.queue[3].Priority {
+  } else if p.queue[2].Priority < p.queue[3].Priority {
     priorityItemLocation = 3
   }
 
-  priorityItem := s.queue[priorityItemLocation]
+  priorityItem := p.queue[priorityItemLocation]
 
-  s.queue[priorityItemLocation] = s.queue[lastItemLocation]
-  s.queue[lastItemLocation] = priorityItem
+  p.queue[priorityItemLocation] = p.queue[lastItemLocation]
+  p.queue[lastItemLocation] = priorityItem
 
   for {
     lastItemLocation = priorityItemLocation
@@ -82,17 +85,17 @@ func (s *StatePriorityQueue) RemoveMax() *StateItem {
       break
     }
 
-    if (priorityItemLocation == len(s.queue) -1) {
+    if (priorityItemLocation == len(p.queue) -1) {
       // Do nothing
-    } else if s.queue[priorityItemLocation].Priority < s.queue[priorityItemLocation + 1].Priority {
+    } else if p.queue[priorityItemLocation].Priority < p.queue[priorityItemLocation + 1].Priority {
       priorityItemLocation = priorityItemLocation + 1
     }
 
-    if s.queue[priorityItemLocation].Priority > s.queue[lastItemLocation].Priority {
-      priorityItem = s.queue[priorityItemLocation]
+    if p.queue[priorityItemLocation].Priority > p.queue[lastItemLocation].Priority {
+      priorityItem = p.queue[priorityItemLocation]
 
-      s.queue[priorityItemLocation] = s.queue[lastItemLocation]
-      s.queue[lastItemLocation] = priorityItem
+      p.queue[priorityItemLocation] = p.queue[lastItemLocation]
+      p.queue[lastItemLocation] = priorityItem
     } else {
       break
     }
@@ -101,27 +104,31 @@ func (s *StatePriorityQueue) RemoveMax() *StateItem {
   return removedItem
 }
 
-func (s *StatePriorityQueue) Len() int {
-  return len(s.queue) - 1
+func (p *PathPriorityQueue) Len() int {
+  return len(p.queue) - 1
 }
 
-func (s *StatePriorityQueue) Empty() bool {
-  return len(s.queue) < 1
+func (p *PathPriorityQueue) Empty() bool {
+  return len(p.queue) < 1
 }
 
-func (s *StatePriorityQueue) String() string {
+func (p *PathPriorityQueue) ContainsPathWithState(state *State) bool {
+  return p.set[state.Name] != nil
+}
+
+func (p *PathPriorityQueue) String() string {
   var text = "["
 
-  for _, stateItem := range s.queue {
-    if stateItem != nil {
-      text += fmt.Sprintf("(State %s, Priority %d), ", stateItem.State.Name, stateItem.Priority)
+  for _, pathItem := range p.queue {
+    if pathItem != nil {
+      text += fmt.Sprintf("(State %s, Priority %d), ", pathItem.Path.State.Name, pathItem.Priority)
     }
   }
 
   return strings.Trim(text, ", ") + "]"
 }
 
-type StateItem struct {
-  State *State
+type PathItem struct {
+  Path *Path
   Priority int
 }
